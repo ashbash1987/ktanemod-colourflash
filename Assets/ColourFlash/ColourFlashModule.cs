@@ -86,8 +86,8 @@ public class ColourFlashModule : MonoBehaviour
     #region Related Components
     public KMBombInfo BombInfo;
     public KMBombModule BombModule;
-    public KMSelectable ButtonYes;
-    public KMSelectable ButtonNo;
+    public ColourFlashButton ButtonYes;
+    public ColourFlashButton ButtonNo;
     public TextMesh Indicator;
     #endregion
 
@@ -127,8 +127,8 @@ public class ColourFlashModule : MonoBehaviour
         BombModule.OnActivate += HandleModuleActive;
         BombModule.OnDeactivate += HandleModuleInactive;
 
-        ButtonYes.OnInteract += HandlePressYes;
-        ButtonNo.OnInteract += HandlePressNo;
+        ButtonYes.KMSelectable.OnInteract += HandlePressYes;
+        ButtonNo.KMSelectable.OnInteract += HandlePressNo;
     }
     #endregion
 
