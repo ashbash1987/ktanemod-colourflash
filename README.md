@@ -6,7 +6,7 @@ Color Flash is an experimental module leveraging the newly-exposed [KTANEModKit]
 
 Visit https://github.com/ashbash1987/ktanemod-colourflash/releases to download the latest release of this module, or build it yourself with this source code and Unity.
 
-Visit http://atbweb.co.uk/ktanemod/colourflash/ for a KTANE-like manual specifically for this module.
+Visit https://ashbash1987.github.io/ktanemod-colourflash/Manual for a KTANE-like manual specifically for this module.
 
 ## Installation
 
