@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cf2299c8864afe4ab42466f546ae20d, type: 3}
+  m_Name: WorkshopItem
+  m_EditorClassIdentifier: 
+  WorkshopPublishedFileID: 720338853
+  Title: Color Flash Module
+  Description: "[h1]About[/h1]\r\nColor Flash is an experimental module leveraging
+    the newly-exposed [b]KTANEModKit[/b] for 'Keep Talking and Nobody Explodes'. It
+    exploits the psychological effect known as the Stroop effect by prompting the
+    defuser with a sequence of color words, but not necessarily in the color that
+    the word indicates.\r\n\r\n[h1]Manual Page[/h1]\r\n[url=https://ashbash1987.github.io/ktanemod-colourflash/Manual/]Click
+    here to vew the manual page for this module.[/url]"
+  PreviewImage: {fileID: 2800000, guid: 996177f3c3a7c9440959c4afbf13bd85, type: 3}
+  Tags:
+  - Module
