@@ -6,7 +6,7 @@ Color Flash is an experimental module leveraging the newly-exposed [KTANEModKit]
 
 ## The Manual
 
-Visit https://ashbash1987.github.io/ktanemod-colorflash/Manual for a KTANE-like manual specifically for this module.
+Visit https://ashbash1987.github.io/ktanemod-colourflash/Manual for a KTANE-like manual specifically for this module.
 
 ## Steam Workshop Installation
 
@@ -22,6 +22,6 @@ Finally, goto http://steamcommunity.com/sharedfiles/filedetails/?id=720338853 to
 
 If you didn't purchase 'Keep Talking and Nobody Explodes' through Steam, but you have a modpreview version to play on, then you can manually install the module instead of using the Steam Workshop.
 
-Goto https://github.com/ashbash1987/ktanemod-colorflash/releases and download the latest release for the module.
+Goto https://github.com/ashbash1987/ktanemod-colourflash/releases and download the latest release for the module.
 
 Inside the *.zip file will be a folder called ColorFlash; drop that folder into the `<path>/<to>/Keep Talking and Nobody Explodes/mods` folder. (If the folder doesn't exist, create one for it).
