@@ -125,10 +125,14 @@ public class ColourFlashModule : MonoBehaviour
         SetRuleButtonPressHandler(SetupRules());
 
         BombModule.OnActivate += HandleModuleActive;
-        BombModule.OnDeactivate += HandleModuleInactive;
 
         ButtonYes.KMSelectable.OnInteract += HandlePressYes;
         ButtonNo.KMSelectable.OnInteract += HandlePressNo;
+    }
+
+    void onDestroy()
+    {
+        HandleModuleInactive();
     }
     #endregion
 
