@@ -13,5 +13,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: ColourFlash
   title: Color Flash
-  version: v0.0.3
+  version: v1.0.0
   outputFolder: H:/SteamLibrary/steamapps/common/Keep Talking and Nobody Explodes/mods
