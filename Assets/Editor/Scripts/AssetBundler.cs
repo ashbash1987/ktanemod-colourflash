@@ -39,7 +39,12 @@ public class AssetBundler
     /// <summary>
     /// Name of the bundle file produced. This relies on the AssetBundle tag used, which is set to mod.bundle by default.
     /// </summary>
-    static string BUNDLE_FILENAME = "mod.bundle";
+    public static string BUNDLE_FILENAME = "mod.bundle";
+
+    /// <summary>
+    /// Folders which should not be included in the asset bundling process.
+    /// </summary>
+    public static string[] EXCLUDED_FOLDERS = new string[] { "Assets/Editor", "Assets/TestHarness" };
 
 
     #region Internal bundler Variables
@@ -118,6 +123,12 @@ public class AssetBundler
             //Create the modInfo.json file
             bundler.CreateModInfo();
 
+            //Copy the modSettings.json file from Assets into the build
+            bundler.CopyModSettings();
+
+            //Copy PDF manual pages to Manual folder in build
+            bundler.CopyManual();
+
             //Lastly, create the asset bundle itself and copy it to the output folder
             bundler.CreateAssetBundle();
 
@@ -135,7 +146,7 @@ public class AssetBundler
 
         if (success)
         {
-            Debug.LogFormat("Build complete! Output: {0}", bundler.outputFolder);
+            Debug.LogFormat("{0} Build complete! Output: {1}", System.DateTime.Now.ToLocalTime(), bundler.outputFolder);
         }
     }
 
@@ -161,7 +172,7 @@ public class AssetBundler
     {
         Debug.Log("Compiling scripts with MSBuild...");
 
-        IEnumerable<string> scriptAssetPaths = AssetDatabase.GetAllAssetPaths().Where(assetPath => assetPath.EndsWith(".cs") && !assetPath.StartsWith("Assets/Editor"));
+        IEnumerable<string> scriptAssetPaths = AssetDatabase.GetAllAssetPaths().Where(assetPath => assetPath.EndsWith(".cs") && IsIncludedAssetPath(assetPath));
 
         if (scriptAssetPaths.Count() == 0)
         {
@@ -175,7 +186,7 @@ public class AssetBundler
         }
 
         //modify the csproj (if needed)
-        var csproj = File.ReadAllText("ktanemods.CSharp.csproj");
+        var csproj = File.ReadAllText("ktanemodkit.CSharp.csproj");
         csproj = csproj.Replace("<AssemblyName>Assembly-CSharp</AssemblyName>", "<AssemblyName>"+ assemblyName + "</AssemblyName>");
         File.WriteAllText("modkithelper.CSharp.csproj", csproj);
 
@@ -201,7 +212,7 @@ public class AssetBundler
     void CompileAssemblyWithEditor()
     {
         Debug.Log("Compiling scripts with EditorUtility.CompileCSharp...");
-        IEnumerable<string> scriptAssetPaths = AssetDatabase.GetAllAssetPaths().Where(assetPath => assetPath.EndsWith(".cs") && !assetPath.StartsWith("Assets/Editor"));
+        IEnumerable<string> scriptAssetPaths = AssetDatabase.GetAllAssetPaths().Where(assetPath => assetPath.EndsWith(".cs") && IsIncludedAssetPath(assetPath));
 
         if (scriptAssetPaths.Count() == 0)
         {
@@ -216,7 +227,7 @@ public class AssetBundler
             playerDefines += ";";
         }
 
-        string allDefines = playerDefines + "TRACE;UNITY_5_3_OR_NEWER;UNITY_5_3_5;UNITY_5_3;UNITY_5;UNITY_64;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_LOG_MIXED_STACKTRACE;ENABLE_UNITYWEBREQUEST;ENABLE_EVENT_QUEUE;ENABLE_CLUSTERINPUT;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN";
+        string allDefines = playerDefines + "TRACE;UNITY_5_3_OR_NEWER;UNITY_5_3_5;UNITY_5_3;UNITY_5;UNITY_64;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_LOG_MIXED_STACKTRACE;ENABLE_UNITYWEBREQUEST;ENABLE_EVENT_QUEUE;ENABLE_CLUSTERINPUT;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS";
         string outputFilename = outputFolder + "/" + assemblyName + ".dll";
 
         List<string> managedReferences = AssetDatabase.GetAllAssetPaths()
@@ -255,7 +266,7 @@ public class AssetBundler
     {
         Debug.Log("Adjusting scripts...");
 
-        IEnumerable<string> assetFolderPaths = AssetDatabase.GetAllAssetPaths().Where(path => path.EndsWith(".cs") && !path.StartsWith("Assets/Editor"));
+        IEnumerable<string> assetFolderPaths = AssetDatabase.GetAllAssetPaths().Where(path => path.EndsWith(".cs") && IsIncludedAssetPath(path));
 
         scriptPathsToRestore = new List<string>();
 
@@ -357,7 +368,15 @@ public class AssetBundler
             Directory.CreateDirectory(TEMP_BUILD_FOLDER);
         }
 
-        BuildPipeline.BuildAssetBundles(TEMP_BUILD_FOLDER, BuildAssetBundleOptions.DeterministicAssetBundle, BuildTarget.StandaloneWindows);
+#pragma warning disable 618
+        //Build the asset bundle with the CollectDependencies flag. This is necessary or else ScriptableObjects like Missions will
+        //not be accessible within the asset bundle. Unity has deprecated this flag claiming it is now always active, but due to a bug
+        //we must still include it (and ignore the warning).
+        BuildPipeline.BuildAssetBundles(
+            TEMP_BUILD_FOLDER, 
+            BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.CollectDependencies, 
+            BuildTarget.StandaloneWindows);
+#pragma warning restore 618
 
         //We are only interested in the BUNDLE_FILENAME bundle (and not the extra AssetBundle or the manifest files
         //that Unity makes), so just copy that to the final output folder
@@ -373,6 +392,73 @@ public class AssetBundler
     {
         File.WriteAllText(outputFolder + "/modInfo.json", ModConfig.Instance.ToJson());
     }
+
+    /// <summary>
+    /// Copies the modSettings.json file from Assets to the OUTPUT_FOLDER.
+    /// </summary>
+    protected void CopyModSettings()
+    {
+        if(File.Exists("Assets/modSettings.json"))
+        {
+            File.Copy("Assets/modSettings.json", outputFolder + "/modSettings.json");
+        }
+    }
+    /// <summary>
+    /// Copies PDF manual pages to Manual folder in OUTPUT_FOLDER to be used for manual combination
+    /// </summary>
+    protected void CopyManual()
+    {
+        if(Directory.Exists("Manual/pdfs"))
+        {
+            DirectoryCopyPDFs("Manual/pdfs", outputFolder + "/Manual", true);
+        }
+    }
+
+    /// <summary>
+    /// Helper method to copy directory
+    /// </summary>
+    private static void DirectoryCopyPDFs(string sourceDirName, string destDirName, bool copySubDirs)
+    {
+        // Get the subdirectories for the specified directory.
+        DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+
+        if (!dir.Exists)
+        {
+            throw new DirectoryNotFoundException(
+                "Source directory does not exist or could not be found: "
+                + sourceDirName);
+        }
+
+        DirectoryInfo[] dirs = dir.GetDirectories();
+        // If the destination directory doesn't exist, create it.
+        if (!Directory.Exists(destDirName))
+        {
+            Directory.CreateDirectory(destDirName);
+        }
+
+        // Get the files in the directory and copy them to the new location.
+        FileInfo[] files = dir.GetFiles();
+        foreach (FileInfo file in files)
+        {
+            string temppath = Path.Combine(destDirName, file.Name);
+            if(file.Extension.ToLower() == ".pdf")
+            {
+                file.CopyTo(temppath, false);
+            }
+            
+        }
+
+        // If copying subdirectories, copy them and their contents to new location.
+        if (copySubDirs)
+        {
+            foreach (DirectoryInfo subdir in dirs)
+            {
+                string temppath = Path.Combine(destDirName, subdir.Name);
+                DirectoryCopyPDFs(subdir.FullName, temppath, copySubDirs);
+            }
+        }
+    }
+
 
     /// <summary>
     /// All assets tagged with "mod.bundle" will be included in the build, including the Example assets. Print out a 
@@ -405,7 +491,7 @@ public class AssetBundler
         {
             string path = AssetDatabase.GUIDToAssetPath(assetGUID);
 
-            if (!path.StartsWith("Assets/Examples"))
+            if (!path.StartsWith("Assets/Examples") && IsIncludedAssetPath(path))
             {
                 var importer = AssetImporter.GetAtPath(path);
                 if (!importer.assetBundleName.Equals(BUNDLE_FILENAME))
@@ -422,10 +508,24 @@ public class AssetBundler
     /// </summary>
     protected void CheckForAssets()
     {
-        string[] assetsInBundle = AssetDatabase.FindAssets(string.Format("t:prefab,t:audioclip,b:", BUNDLE_FILENAME));
+        string[] assetsInBundle = AssetDatabase.FindAssets(string.Format("t:prefab,t:audioclip,t:scriptableobject,b:", BUNDLE_FILENAME));
         if (assetsInBundle.Length == 0)
         {
             throw new Exception(string.Format("No assets have been tagged for inclusion in the {0} AssetBundle.", BUNDLE_FILENAME));
         }
+    }
+
+    /// <returns>true if the given path does not start with any of the paths in EXCLUDED_FOLDERS</returns>
+    protected bool IsIncludedAssetPath(string path)
+    {
+        foreach (string excludedPath in EXCLUDED_FOLDERS)
+        {
+            if (path.StartsWith(excludedPath))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
