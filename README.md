@@ -14,7 +14,7 @@ If you purchased _Keep Talking and Nobody Explodes_ through Steam, you'll be abl
 
 ## Non-Steam Installation
 
-If you didn't purchase 'Keep Talking and Nobody Explodes' through Steam, but you have a modpreview version to play on, then you can manually install the module instead of using the Steam Workshop.
+If you didn't purchase _Keep Talking and Nobody Explodes_ through Steam, but you have a mod-enabled version to play on, then you can manually install the module instead of using the Steam Workshop.
 
 Goto https://github.com/ashbash1987/ktanemod-colourflash/releases and download the latest release for the module.
 
