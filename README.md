@@ -2,7 +2,7 @@
 
 ![Color Flash Module](https://ashbash1987.github.io/ktanemod-colourflash/Manual/img/Component.png "Color Flash Module")
 
-Color Flash is an experimental module leveraging the newly-exposed [KTANEModKit](https://github.com/keeptalkinggame/ktanemodkit) for _Keep Talking and Nobody Explodes_. It exploits the psychological effect known as the Stroop effect by prompting the defuser with a sequence of color words, but not necessarily in the color that the word indicates.
+Color Flash is a module leveraging the newly-exposed [KTANEModKit](https://github.com/keeptalkinggame/ktanemodkit) for _Keep Talking and Nobody Explodes_. It exploits the psychological effect known as the Stroop effect by prompting the defuser with a sequence of color words, but not necessarily in the color that the word indicates.
 
 ## The Manual
 
