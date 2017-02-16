@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections;
 using UnityEngine;
+using System.Text;
 
 /// <summary>
 /// </summary>
@@ -119,10 +120,42 @@ public class ColourFlashModule : MonoBehaviour
     #endregion
 
     #region Unity Lifecycle Methods
+    void Awake()
+    {
+        BombModule.GenerateLogFriendlyName();
+    }
+
     void Start()
     {
+        StringBuilder logString = new StringBuilder();
+
+        logString.Append("Module generated with the following word-color sequence:\n");
+        logString.Append("# | Word    | Color   | Valid Response\n");
+        logString.Append("--+---------+---------+----------------\n");
+
+        string blockTitle = "";
+        string condition = "";
+
         GenerateModuleInformation();
-        SetRuleButtonPressHandler(SetupRules());
+
+        RuleButtonPressHandler ruleHandler = SetupRules(ref blockTitle, ref condition);
+        SetRuleButtonPressHandler(ruleHandler);
+
+        //Logging section
+        for(int colourSequenceIndex = 0; colourSequenceIndex < _colourSequence.Length; ++colourSequenceIndex)
+        {
+            _currentColourSequenceIndex = colourSequenceIndex;
+            ColourPair pair = _colourSequence[_currentColourSequenceIndex];
+            string response = ruleHandler(true) ? "[YES]" : (ruleHandler(false) ? "[NO]" : "---");
+
+            logString.AppendFormat("{0} | {1,-7} | {2,-7} | {3}\n", colourSequenceIndex + 1, pair.ColourText.ToString(), pair.ColourValue.ToString(), response);
+        }
+        logString.Append("\nThe sequence matched the following block title and condition statement:\n");
+        logString.AppendFormat("\"{0}\"\n-> \"{1}\"\n", blockTitle, condition);
+
+        BombModule.Log(logString.ToString());
+
+        _currentColourSequenceIndex = -1;
 
         BombModule.OnActivate += HandleModuleActive;
 
@@ -207,24 +240,26 @@ public class ColourFlashModule : MonoBehaviour
     #endregion
 
     #region Module Rules
-    private RuleButtonPressHandler SetupRules()
+    private RuleButtonPressHandler SetupRules(ref string blockTitle, ref string condition)
     {
         CheckForClashingColours();
+
+        blockTitle = string.Format("The color of the last word in the sequence is {0}.", _colourSequence[_colourSequence.Length - 1].ColourValue.ToString());
 
         switch (_colourSequence[_colourSequence.Length - 1].ColourValue)
         {
             case Colours.Red:
-                return SetupRulesForBlockA();
+                return SetupRulesForBlockA(ref blockTitle, ref condition);
             case Colours.Yellow:
-                return SetupRulesForBlockB();
+                return SetupRulesForBlockB(ref blockTitle, ref condition);
             case Colours.Green:
-                return SetupRulesForBlockC();
+                return SetupRulesForBlockC(ref blockTitle, ref condition);
             case Colours.Blue:
-                return SetupRulesForBlockD();
+                return SetupRulesForBlockD(ref blockTitle, ref condition);
             case Colours.Magenta:
-                return SetupRulesForBlockE();
+                return SetupRulesForBlockE(ref blockTitle, ref condition);
             case Colours.White:
-                return SetupRulesForBlockF();
+                return SetupRulesForBlockF(ref blockTitle, ref condition);
 
             default:
                 return null;
@@ -251,11 +286,11 @@ public class ColourFlashModule : MonoBehaviour
         }
     }
 
-    private RuleButtonPressHandler SetupRulesForBlockA()
+    private RuleButtonPressHandler SetupRulesForBlockA(ref string blockTitle, ref string condition)
     {
-        //If Green is used as the word at least three times in the sequence, press Yes on the 3rd time Green is used as either the word or the colour of the word in the sequence.
         if (_colourSequence.Count((x) => x.ColourText == Colours.Green) >= 3)
         {
+            condition = "1. If Green is used as the word at least three times in the sequence, press Yes on the third time Green is used as either the word or the color of the word in the sequence.";
             return delegate (bool yesPress)
             {
                 if (!yesPress)
@@ -280,15 +315,16 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
-        //If Blue is used as the colour of the word exactly once, press No when the word Magenta is shown.
         if (_colourSequence.Count((x) => x.ColourValue == Colours.Blue) == 1)
         {
+            condition = "2. (Otherwise,) if Blue is used as the color of the word exactly once, press No when the word Magenta is shown.";
+
             if (!_colourSequence.Any((x) => x.ColourText == Colours.Magenta))
             {
                 _colourSequence[UnityEngine.Random.Range(0, _colourSequence.Length)].ColourText = Colours.Magenta;
 
                 //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-                return SetupRules();
+                return SetupRules(ref blockTitle, ref condition);
             }
 
             return delegate (bool yesPress)
@@ -297,7 +333,8 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
-        //Otherwise, press Yes the last time White is either the word or the colour of the word in the sequence.
+        condition = "3. (Otherwise,) press Yes the last time White is either the word or the color of the word in the sequence.";
+
         if (!_colourSequence.Any((x) => x.HasColour(Colours.White)))
         {
             if (UnityEngine.Random.Range(0, 2) == 0)
@@ -310,7 +347,7 @@ public class ColourFlashModule : MonoBehaviour
             }
 
             //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-            return SetupRules();
+            return SetupRules(ref blockTitle, ref condition);
         }
 
         return delegate (bool yesPress)
@@ -319,20 +356,22 @@ public class ColourFlashModule : MonoBehaviour
         };
     }
 
-    private RuleButtonPressHandler SetupRulesForBlockB()
+    private RuleButtonPressHandler SetupRulesForBlockB(ref string blockTitle, ref string condition)
     {
-        //If the word Blue is shown in Green colour, press Yes on the first time Green is used as the colour of the word.
         if (_colourSequence.Any((x) => x.ColourText == Colours.Blue && x.ColourValue == Colours.Green))
         {
+            condition = "1. If the word Blue is shown in Green color, press Yes on the first time Green is used as the color of the word.";
+
             return delegate (bool yesPress)
             {
                 return yesPress && _currentColourSequenceIndex == Array.FindIndex(_colourSequence, (x) => x.ColourValue == Colours.Green);
             };
         }
 
-        //If the word White is shown in either White or Red colour, press Yes on the second time in the sequence where the colour of the word does not match the word itself.
         if (_colourSequence.Any((x) => x.ColourText == Colours.White && (x.ColourValue == Colours.White || x.ColourValue == Colours.Red)))
         {
+            condition = "2. (Otherwise,) if the word White is shown in either White or Red color, press Yes on the second time in the sequence where the color of the word does not match the word itself.";
+
             bool modified = false;
             while (_colourSequence.Count((x) => x.ColourText != x.ColourValue) < 2)
             {
@@ -344,7 +383,7 @@ public class ColourFlashModule : MonoBehaviour
             if (modified)
             {
                 //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-                return SetupRules();
+                return SetupRules(ref blockTitle, ref condition);
             }
 
             return delegate (bool yesPress)
@@ -371,6 +410,8 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
+        condition = "3. (Otherwise,) count the number of times Magenta is used as either the word or the color of the word in the sequence (the word Magenta in Magenta color only counts as one), and press No on the color in the total's position (e.g. a total of 4 means the fourth color in sequence).";
+
         //Otherwise, count the number of times Magenta is used as either the word or the colour of the word in the sequence, and press No on the colour in the total's position (i.e. a total of 4 means the fourth colour in sequence)
         if (!_colourSequence.Any((x) => x.HasColour(Colours.Magenta)))
         {
@@ -384,7 +425,7 @@ public class ColourFlashModule : MonoBehaviour
             }
 
             //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-            return SetupRules();
+            return SetupRules(ref blockTitle, ref condition);
         }
 
         return delegate (bool yesPress)
@@ -393,11 +434,12 @@ public class ColourFlashModule : MonoBehaviour
         };
     }
 
-    private RuleButtonPressHandler SetupRulesForBlockC()
+    private RuleButtonPressHandler SetupRulesForBlockC(ref string blockTitle, ref string condition)
     {
-        //If a word occurs consecutively with different colours, press No on the fifth colour in the sequence.
         for (int colourSequenceIndex = 0; colourSequenceIndex < _colourSequence.Length - 1; ++colourSequenceIndex)
         {
+            condition = "1. If a word occurs consecutively with different colors, press No on the fifth entry in the sequence.";
+
             if (_colourSequence[colourSequenceIndex + 1].ColourText == _colourSequence[colourSequenceIndex].ColourText)
             {
                 return delegate (bool yesPress)
@@ -407,9 +449,10 @@ public class ColourFlashModule : MonoBehaviour
             }
         }
 
-        //If Magenta is used as the word as least three times in the sequence, press No on the first time Yellow is used as either the word or the colour of the word in the sequence.
         if (_colourSequence.Count((x) => x.ColourText == Colours.Magenta) >= 3)
         {
+            condition = "2. (Otherwise,) if Magenta is used as the word as least three times in the sequence, press No on the first time Yellow is used as either the word or the color of the word in the sequence.";
+
             if (!_colourSequence.Any((x) => x.HasColour(Colours.Yellow)))
             {
                 if (UnityEngine.Random.Range(0, 2) == 0)
@@ -422,7 +465,7 @@ public class ColourFlashModule : MonoBehaviour
                 }
 
                 //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-                return SetupRules();
+                return SetupRules(ref blockTitle, ref condition);
             }
 
             return delegate (bool yesPress)
@@ -431,14 +474,15 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
-        //Otherwise, press yes on any colour where the colour of the word matches the word itself.
+        condition = "3. (Otherwise,) press Yes on any color where the color of the word matches the word itself.";
+
         if (!_colourSequence.Any((x) => x.ColourText == x.ColourValue))
         {
             int colourSequenceIndex = UnityEngine.Random.Range(0, _colourSequence.Length - 1);
             _colourSequence[colourSequenceIndex].ColourText = _colourSequence[colourSequenceIndex].ColourValue;
 
             //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-            return SetupRules();
+            return SetupRules(ref blockTitle, ref condition);
         }
 
         return delegate (bool yesPress)
@@ -447,20 +491,22 @@ public class ColourFlashModule : MonoBehaviour
         };
     }
 
-    private RuleButtonPressHandler SetupRulesForBlockD()
+    private RuleButtonPressHandler SetupRulesForBlockD(ref string blockTitle, ref string condition)
     {
-        //If the colour of the word does not match the word itself three times or more in the sequence, press Yes on the first time in the sequence where the colour of the word does not match the world itself.
         if (_colourSequence.Count((x) => x.ColourText != x.ColourValue) >= 3)
         {
+            condition = "1. If the color of the word does not match the word itself three times or more in the sequence, press Yes on the first time in the sequence where the color of the word does not match the word itself.";
+
             return delegate (bool yesPress)
             {
                 return yesPress && _currentColourSequenceIndex == Array.FindIndex(_colourSequence, (x) => x.ColourText != x.ColourValue);
             };
         }
 
-        //If the word Red is shown in Yellow colour, or the word Yellow is shown in White colour, press No when the word White is shown in Red colour.
         if (_colourSequence.Any((x) => (x.ColourText == Colours.Red && x.ColourValue == Colours.Yellow) || (x.ColourText == Colours.Yellow && x.ColourValue == Colours.White)))
         {
+            condition = "2. (Otherwise,) if the word Red is shown in Yellow color, or the word Yellow is shown in White color, press No when the word White is shown in Red color.";
+
             if (!_colourSequence.Any((x) => x.ColourText == Colours.White && x.ColourValue == Colours.Red))
             {
                 int colourSequenceIndex = Array.FindIndex(_colourSequence, (x) => !((x.ColourText == Colours.Red && x.ColourValue == Colours.Yellow) || (x.ColourText == Colours.Yellow && x.ColourValue == Colours.White)));
@@ -468,7 +514,7 @@ public class ColourFlashModule : MonoBehaviour
                 _colourSequence[colourSequenceIndex].ColourValue = Colours.Red;
 
                 //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-                return SetupRules();
+                return SetupRules(ref blockTitle, ref condition);
             }
 
             return delegate (bool yesPress)
@@ -477,7 +523,8 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
-        //Otherwise, press Yes the last time Green is either the word or the colour of the word in the sequence.
+        condition = "3. (Otherwise,) press Yes the last time Green is either the word or the color of the word in the sequence.";
+
         if (!_colourSequence.Any((x) => x.HasColour(Colours.Green)))
         {
             if (UnityEngine.Random.Range(0, 2) == 0)
@@ -490,7 +537,7 @@ public class ColourFlashModule : MonoBehaviour
             }
 
             //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-            return SetupRules();
+            return SetupRules(ref blockTitle, ref condition);
         }
 
         return delegate (bool yesPress)
@@ -499,11 +546,12 @@ public class ColourFlashModule : MonoBehaviour
         };
     }
 
-    private RuleButtonPressHandler SetupRulesForBlockE()
+    private RuleButtonPressHandler SetupRulesForBlockE(ref string blockTitle, ref string condition)
     {
-        //If a colour occurs consecutively with different words, press Yes on the third colour in the sequence.
         for (int colourSequenceIndex = 0; colourSequenceIndex < _colourSequence.Length - 1; ++colourSequenceIndex)
         {
+            condition = "1. If a color occurs consecutively with different words, press Yes on the third entry in the sequence.";
+
             if (_colourSequence[colourSequenceIndex + 1].ColourValue == _colourSequence[colourSequenceIndex].ColourValue)
             {
                 return delegate (bool yesPress)
@@ -513,23 +561,25 @@ public class ColourFlashModule : MonoBehaviour
             }
         }
 
-        //If the number of times the word Yellow appears is greater than the number of times that the colour of the word is Blue, press No the last time the word Yellow is in the sequence.
         if (_colourSequence.Count((x) => x.ColourText == Colours.Yellow) > _colourSequence.Count((x) => x.ColourValue == Colours.Blue))
         {
+            condition = "2. (Otherwise,) if the number of times the word Yellow appears is greater than the number of times that the color of the word is Blue, press No the last time the word Yellow is in the sequence.";
+
             return delegate (bool yesPress)
             {
                 return !yesPress && _currentColourSequenceIndex == Array.FindLastIndex(_colourSequence, (x) => x.ColourText == Colours.Yellow);
             };
         }
 
-        //Otherwise, press No on the first time in the sequence where the colour of the word matches the word of the seventh word in the sequence.
+        condition = "3. (Otherwise,) press No on the first time in the sequence where the color of the word matches the word of the seventh entry in the sequence.";
+
         Colours colourToMatch = _colourSequence[6].ColourText;
         if (!_colourSequence.Any((x) => x.ColourValue == colourToMatch))
         {
             _colourSequence[UnityEngine.Random.Range(0, _colourSequence.Length - 1)].ColourValue = colourToMatch;
 
             //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-            return SetupRules();
+            return SetupRules(ref blockTitle, ref condition);
         }
 
         return delegate (bool yesPress)
@@ -538,12 +588,13 @@ public class ColourFlashModule : MonoBehaviour
         };
     }
 
-    private RuleButtonPressHandler SetupRulesForBlockF()
+    private RuleButtonPressHandler SetupRulesForBlockF(ref string blockTitle, ref string condition)
     {
-        //If the colour of the third word matches the word of the fourth word or fifth word, press No the first time that Blue is used as the word or the colour of the word in the sequence.
         Colours colourToMatch = _colourSequence[2].ColourValue;
         if (_colourSequence[3].ColourText == colourToMatch || _colourSequence[4].ColourText == colourToMatch)
         {
+            condition = "1. If the color of the third word matches the word of the fourth word or fifth word, press No the first time that Blue is used as the word or the color of the word in the sequence.";
+
             if (!_colourSequence.Any((x) => x.HasColour(Colours.Blue)))
             {
                 if (UnityEngine.Random.Range(0, 2) == 0)
@@ -556,7 +607,7 @@ public class ColourFlashModule : MonoBehaviour
                 }
 
                 //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-                return SetupRules();
+                return SetupRules(ref blockTitle, ref condition);
             }
 
             return delegate (bool yesPress)
@@ -565,15 +616,16 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
-        //If the word Yellow is shown in Red colour, press Yes on the last time Blue is used as the colour of the word.
         if (_colourSequence.Any((x) => x.ColourText == Colours.Yellow && x.ColourValue == Colours.Red))
         {
+            condition = "2. (Otherwise,) if the word Yellow is shown in Red color, press Yes on the last time Blue is used as the color of the word.";
+
             if (!_colourSequence.Any((x) => x.ColourValue == Colours.Blue))
             {
                 _colourSequence[UnityEngine.Random.Range(0, _colourSequence.Length - 1)].ColourValue = Colours.Blue;
 
                 //Modification has been made to match this rule's exit condition - check against all pre-existing rules
-                return SetupRules();
+                return SetupRules(ref blockTitle, ref condition);
             }
 
             return delegate (bool yesPress)
@@ -582,7 +634,8 @@ public class ColourFlashModule : MonoBehaviour
             };
         }
 
-        //Otherwise, press No.
+        condition = "3. (Otherwise,) press No.";
+
         return delegate (bool yesPress)
         {
             return !yesPress;
@@ -596,13 +649,25 @@ public class ColourFlashModule : MonoBehaviour
 
     private void CheckRuleButtonPressHandler(bool yesButton)
     {
+        if (_currentColourSequenceIndex < 0)
+        {
+            BombModule.LogFormat("[{0}] button was pressed at an invalid time!", yesButton ? "YES" : "NO");
+        }
+        else
+        {
+            ColourPair pair = _colourSequence[_currentColourSequenceIndex];
+            BombModule.LogFormat("[{0}] button was pressed on entry #{1} ('{2}' word in '{3}' color)", yesButton ? "YES" : "NO", _currentColourSequenceIndex + 1, pair.ColourText.ToString(), pair.ColourValue.ToString());
+        }
+
         if (_ruleButtonPressHandler != null && _ruleButtonPressHandler(yesButton))
         {
+            BombModule.Log("Valid answer! Module defused!");
             BombModule.HandlePass();
             FinishModule();
         }
         else
         {
+            BombModule.Log("Invalid answer! Module triggered a strike!");
             BombModule.HandleStrike();
         }
     }
@@ -612,8 +677,4 @@ public class ColourFlashModule : MonoBehaviour
         HandleModuleInactive();
     }
     #endregion
-
-    
-    
-    
 }
