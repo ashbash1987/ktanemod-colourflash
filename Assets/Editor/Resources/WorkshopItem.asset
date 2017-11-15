@@ -14,12 +14,12 @@ MonoBehaviour:
   WorkshopPublishedFileID: 720338853
   Title: Color Flash Module
   Description: "[b][i]It's easy to identify colors. Red, Blue, Green, etc. Turns out
-    it's a bit harder when you display a word color in a different color though...[/i][/b]\n\n[h1]About[/h1]\r\nColor
+    it's a bit harder when you display a word color in a different color though...[/i][/b]\r\n\r\n[h1]About[/h1]\r\nColor
     Flash exploits the psychological effect known as the Stroop effect by prompting
     the defuser with a sequence of color words, but not necessarily in the color that
     the word indicates.\r\n\r\n[h1]Manual Page[/h1]\r\nThe manual PDF is included
     in the download. However, you can also [url=https://ashbash1987.github.io/ktanemod-colourflash/Manual/]click
-    here[/url] to view it online.\n\r\n[h1]Mission Makers[/h1]\r\nFor those making
+    here[/url] to view it online.\r\n\r\n[h1]Mission Makers[/h1]\r\nFor those making
     custom missions, the type name for this module is [b]ColourFlash[/b] [i](note
     the 'u' in Colour, sorry, I'm from the UK!)[/i]"
   PreviewImage: {fileID: 2800000, guid: 996177f3c3a7c9440959c4afbf13bd85, type: 3}

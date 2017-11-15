@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections;
 using UnityEngine;
 using System.Text;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// </summary>
@@ -675,6 +676,62 @@ public class ColourFlashModule : MonoBehaviour
     private void FinishModule()
     {
         HandleModuleInactive();
+    }
+    #endregion
+
+    #region Twitch Plays
+    public IEnumerator ProcessTwitchCommand(string command)
+    {
+        Debug.LogFormat("At the start, the time is: {0}", Time.time);
+
+        Match modulesMatch = Regex.Match(command, "^press (yes|no|y|n) ([1-8]|any)$", RegexOptions.IgnoreCase);
+        if (!modulesMatch.Success)
+        {
+            yield break;
+        }
+
+        KMSelectable buttonSelectable = null;
+
+        string buttonName = modulesMatch.Groups[1].Value;
+        if (buttonName.Equals("yes", StringComparison.InvariantCultureIgnoreCase) || buttonName.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+        {
+            buttonSelectable = ButtonYes.KMSelectable;
+        }
+        else if (buttonName.Equals("no", StringComparison.InvariantCultureIgnoreCase) || buttonName.Equals("n", StringComparison.InvariantCultureIgnoreCase))
+        {
+            buttonSelectable = ButtonNo.KMSelectable;
+        }
+
+        if (buttonSelectable == null)
+        {
+            yield break;
+        }
+
+        string position = modulesMatch.Groups[2].Value;
+        int positionIndex = int.MinValue;
+
+        if (int.TryParse(position, out positionIndex))
+        {
+            Debug.LogFormat("Just before the loop, the time is: {0}", Time.time);
+
+            positionIndex--;
+            while (positionIndex != _currentColourSequenceIndex)
+            {
+                Debug.LogFormat("In the loop, The time is: {0}", Time.time);
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            Debug.LogFormat("End of the loop: {0}", Time.time);
+            yield return buttonSelectable;
+            yield return new WaitForSeconds(0.1f);
+            yield return buttonSelectable;
+        }
+        else if (position.Equals("any", StringComparison.InvariantCultureIgnoreCase))
+        {
+            yield return buttonSelectable;
+            yield return new WaitForSeconds(0.1f);
+            yield return buttonSelectable;
+        }
     }
     #endregion
 }
