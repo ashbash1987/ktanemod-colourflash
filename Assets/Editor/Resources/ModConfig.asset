@@ -22,6 +22,6 @@ MonoBehaviour:
     here[/url] to view it online.\r\n\r\n[h1]Mission Makers[/h1]\r\nFor those making
     custom missions, the type name for this module is [b]ColourFlash[/b] [i](note
     the 'u' in Colour, sorry, I'm from the UK!)[/i]"
-  version: v1.3.0
+  version: v1.3.1
   outputFolder: E:\Games\SteamLibrary\steamapps\common\Keep Talking and Nobody Explodes\mods
   previewImage: {fileID: 2800000, guid: 996177f3c3a7c9440959c4afbf13bd85, type: 3}
