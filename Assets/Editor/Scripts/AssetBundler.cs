@@ -64,7 +64,7 @@ public class AssetBundler
     private List<string> scriptPathsToRestore = new List<string>();
     #endregion
 
-    [MenuItem("Keep Talking ModKit/Build AssetBundle", priority = 10)]
+    [MenuItem("Keep Talking ModKit/Build AssetBundle _F6", priority = 10)]
     public static void BuildAllAssetBundles_WithEditorUtility()
     {
         BuildModBundle(false);
@@ -123,7 +123,7 @@ public class AssetBundler
             //Copy any other non-Editor managed assemblies to the output folder
             bundler.CopyManagedAssemblies();
 
-            //Create the modInfo.json file
+            //Create the modInfo.json file and copy the preview image if available
             bundler.CreateModInfo();
 
             //Copy the modSettings.json file from Assets into the build
@@ -243,7 +243,7 @@ public class AssetBundler
         {
             case PlatformID.MacOSX:
             case PlatformID.Unix:
-                unityAssembliesLocation = EditorApplication.applicationPath.Replace("Unity.app", "Unity.app/Contents/Frameworks/Managed/");
+                unityAssembliesLocation = EditorApplication.applicationPath.Replace("Unity.app", "Unity.app/Contents/Managed/");
                 break;
             case PlatformID.Win32NT:
             default:
@@ -262,10 +262,10 @@ public class AssetBundler
         string[] defineArray = allDefines.Split(';');
 
         //MonoIsland to compile
-        string classlib_profile = "2.0";
+        int apiCompatibilityLevel = 1; //NET_2_0 compatibility level is enum value 1
         Assembly assembly = Assembly.GetAssembly(typeof(MonoScript));
         var monoIslandType = assembly.GetType("UnityEditor.Scripting.MonoIsland");
-        object monoIsland = Activator.CreateInstance(monoIslandType, BuildTarget.StandaloneWindows, classlib_profile, scriptArray, referenceArray, defineArray, outputFilename);
+        object monoIsland = Activator.CreateInstance(monoIslandType, BuildTarget.StandaloneWindows, apiCompatibilityLevel, scriptArray, referenceArray, defineArray, outputFilename);
 
         //MonoCompiler itself
         var monoCompilerType = assembly.GetType("UnityEditor.Scripting.Compilers.MonoCSharpCompiler");
@@ -439,6 +439,12 @@ public class AssetBundler
     protected void CreateModInfo()
     {
         File.WriteAllText(outputFolder + "/modInfo.json", ModConfig.Instance.ToJson());
+
+        if(ModConfig.PreviewImage != null)
+        {
+            byte[] bytes = ModConfig.PreviewImage.EncodeToPNG();
+            File.WriteAllBytes(outputFolder + "/previewImage.png", bytes);
+        }
     }
 
     /// <summary>
@@ -582,6 +588,16 @@ public class AssetBundler
     /// </summary>
     protected void UpdateMaterialInfo()
     {
+        List<string> supportedShaders = new List<string>
+            {
+                "Legacy Shaders/Diffuse", "Hidden/CubeBlur", "Hidden/CubeCopy", "Hidden/CubeBlend",
+                "UI/Default", "UI/Default Font", "Mobile/Diffuse", "Unlit/Transparent",
+                "Unlit/Transparent Cutout", "Unlit/Color", "Mobile/Unlit (Supports Lightmap)", "Unlit/Texture",
+                "KT/Blend Lit and Unlit", "KT/Blend Lit and Unlit Vertex Color", "KT/Blend Unlit", "GUI/KT 3D Text",
+                "KT/Mobile/Diffuse", "KT/Mobile/DiffuseTint", "KT/Transparent/Mobile Diffuse Underlay200", "KT/Unlit/TexturedLightmap",
+                "KT/Unlit/TransparentVertexColorUnderlay30", "KT/Outline"
+            };
+
         string[] prefabsGUIDs = AssetDatabase.FindAssets("t: prefab");
         foreach(string prefabGUID in prefabsGUIDs)
         {
@@ -604,6 +620,15 @@ public class AssetBundler
                     foreach(Material material in renderer.sharedMaterials)
                     {
                         materialInfo.ShaderNames.Add(material.shader.name);
+
+                        if(material.shader.name == "Standard")
+                        {
+                            Debug.LogWarning(string.Format("Use of Standard shader in object {0}. Standard shader should be avoided as it will cause your mod to break in future versions of the game.", renderer.gameObject));
+                        }
+                        else if(!supportedShaders.Contains(material.shader.name))
+                        {
+                            Debug.LogWarning(string.Format("Use of custom shader {0} in object {1}. Use of custom shaders will break mod compatibility on game update requiring rebuild. Recommend using only supported shaders.", material.shader.name, renderer.gameObject));
+                        }
                     }
                 }
             }
