@@ -707,6 +707,9 @@ public class ColourFlashModule : MonoBehaviour
             yield break;
         }
 
+        //This is to "do the right thing"™
+        yield return null;
+
         string position = modulesMatch.Groups[2].Value;
         int positionIndex = int.MinValue;
 
