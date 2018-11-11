@@ -105,6 +105,7 @@ public class ColourFlashModule : MonoBehaviour
     private RuleButtonPressHandler _ruleButtonPressHandler = null;
     private ColourPair[] _colourSequence = null;
     private int _currentColourSequenceIndex = -1;
+    private bool _solved = false;
 
     private ColourPair CurrentColourPair
     {
@@ -164,7 +165,7 @@ public class ColourFlashModule : MonoBehaviour
         ButtonNo.KMSelectable.OnInteract += HandlePressNo;
     }
 
-    void onDestroy()
+    void OnDestroy()
     {
         HandleModuleInactive();
     }
@@ -652,7 +653,7 @@ public class ColourFlashModule : MonoBehaviour
     {
         if (_currentColourSequenceIndex < 0)
         {
-            BombModule.LogFormat("[{0}] button was pressed at an invalid time!", yesButton ? "YES" : "NO");
+            BombModule.LogFormat("[{0}] button was pressed at an unknown time!", yesButton ? "YES" : "NO");
         }
         else
         {
@@ -676,12 +677,19 @@ public class ColourFlashModule : MonoBehaviour
     private void FinishModule()
     {
         HandleModuleInactive();
+        _solved = true;
     }
     #endregion
 
     #region Twitch Plays
     public IEnumerator ProcessTwitchCommand(string command)
     {
+        //Because the goal-posts have changed and I didn't know until people blamed my un-aware implementation for breaking things.
+        if (_solved)
+        {
+            yield break;
+        }
+
         Debug.LogFormat("At the start, the time is: {0}", Time.time);
 
         Match modulesMatch = Regex.Match(command, "^press (yes|no|y|n) ([1-8]|any)$", RegexOptions.IgnoreCase);
