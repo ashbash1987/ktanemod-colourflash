@@ -744,5 +744,15 @@ public class ColourFlashModule : MonoBehaviour
             yield return buttonSelectable;
         }
     }
+
+    public IEnumerator TwitchHandleForcedSolve()
+    {
+        while (_ruleButtonPressHandler == null) yield return true;
+        while (!_ruleButtonPressHandler(true) && !_ruleButtonPressHandler(false)) yield return true;
+        if (_ruleButtonPressHandler(true))
+            ButtonYes.KMSelectable.OnInteract();
+        else
+            ButtonNo.KMSelectable.OnInteract();
+    }
     #endregion
 }
