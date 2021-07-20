@@ -747,6 +747,7 @@ public class ColourFlashModule : MonoBehaviour
 
     public IEnumerator TwitchHandleForcedSolve()
     {
+        Debug.LogFormat("Autosolve requested by Twitch Plays.");
         while (_ruleButtonPressHandler == null) yield return true;
         while (!_ruleButtonPressHandler(true) && !_ruleButtonPressHandler(false)) yield return true;
         if (_ruleButtonPressHandler(true))
